@@ -2,12 +2,14 @@ name: Auto Update Movie KV
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Runs every day at midnight
-  workflow_dispatch:    # Allows you to click "Run workflow" manually
+    - cron: '0 0 * * *' # Runs daily at midnight
+  workflow_dispatch:    # Allows manual testing
 
 jobs:
   scrape_and_sync:
     runs-on: ubuntu-latest
+    
+    # This environment variable stops the deprecation warnings
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true 
 
@@ -25,16 +27,16 @@ jobs:
 
       - name: Scrape Movie Data
         run: |
-          # This runs your scraper and saves the list to a file
+          # Run the scraper and save to a file to handle large data safely
           node index.js > movies.json
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
 
       - name: Update Cloudflare KV
         run: |
-          # Standardized Wrangler v4 command
-          # Using --path ensures the entire file is uploaded correctly
-          npx wrangler kv:key put --namespace-id="${{ secrets.CF_KV_NAMESPACE_ID }}" "latest_movies" --path movies.json
+          # Use quotes around the ID and ensure the path is at the very end
+          # This syntax is compatible with the latest Wrangler v4
+          npx wrangler kv:key put "latest_movies" --namespace-id="${{ secrets.CF_KV_NAMESPACE_ID }}" --path movies.json
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
