@@ -7,24 +7,34 @@ on:
 jobs:
   scrape_and_sync:
     runs-on: ubuntu-latest
+    env:
+      # Opt into Node.js 24 early to remove the deprecation warnings in your logs
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true 
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - run: npm install
-      - name: Scrape
+          node-version: 24 
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Scrape Movie Data
         id: scrape_step
         run: |
+          # Use a heredoc or temporary file if the data is very large to avoid shell limits
           DATA=$(node index.js)
           echo "JSON_DATA=$DATA" >> $GITHUB_ENV
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+
       - name: Update Cloudflare KV
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          # This command pushes the list to your KV key "latest_movies"
-          command: kv:key put --namespace-id=${{ secrets.CF_KV_NAMESPACE_ID }} "latest_movies" "$JSON_DATA"
+          # FIX: Pipe the actual data into wrangler and use --path - to read from the pipe
+          command: |
+            echo "$JSON_DATA" | npx wrangler kv:key put --namespace-id=${{ secrets.CF_KV_NAMESPACE_ID }} "latest_movies" --path -
