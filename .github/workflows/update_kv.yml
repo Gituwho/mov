@@ -8,8 +8,6 @@ on:
 jobs:
   scrape_and_sync:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true 
 
     steps:
       - name: Checkout Repository
@@ -18,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22 # Node 22 is the current stable LTS; use 24 if specifically required
+          node-version: 20
 
       - name: Install Dependencies
         run: npm install
@@ -29,7 +27,7 @@ jobs:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
 
       - name: Update Cloudflare KV
-        run: npx wrangler kv key put --binding TAMIL_SOLAI_KV "latest_movies" --path movies.json
+        run: npx wrangler kv key put --binding TAMIL_SOLAI_KV "latest_movies" --path movies.json --remote
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
