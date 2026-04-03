@@ -1,0 +1,29 @@
+name: Sync Tamil Movies to KV
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs daily at midnight
+  workflow_dispatch:    # Allows manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: npm install axios
+
+      - name: Get Movie Data
+        id: scraper
+        run: |
+          DATA=$(node index.js)
+          echo "MOVIE_DATA=$DATA" >> $GITHUB_ENV
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+
+      - name: Publish to Cloudflare KV
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: kv:key put --binding=TAMIL_SOLAI_KV "latest_movies" "$MOVIE_DATA"
