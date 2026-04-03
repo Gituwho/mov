@@ -1,0 +1,7 @@
+name = "mov"
+main = "index.js"
+compatibility_date = "2024-04-03"
+
+[[kv_namespaces]]
+binding = "TAMIL_SOLAI_KV"
+id = "e22be933793347bebf8492b5f69e93c9"
